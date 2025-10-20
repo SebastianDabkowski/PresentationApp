@@ -28,7 +28,7 @@ public class QuestionService
 
     public async Task<Question> CreateQuestionAsync(Question question)
     {
-        question.AskedAt = DateTime.Now;
+        question.AskedAt = DateTime.UtcNow;
         _context.Questions.Add(question);
         await _context.SaveChangesAsync();
         return question;
