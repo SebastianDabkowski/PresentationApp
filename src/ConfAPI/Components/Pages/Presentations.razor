@@ -1,0 +1,90 @@
+@page "/presentations"
+@using ConfApp.Shared.Models
+@using ConfAPI.Services
+@inject PresentationService PresentationService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Presentations</PageTitle>
+
+<h1>Conference Presentations</h1>
+
+<p>Manage all conference presentations</p>
+
+<button class="btn btn-primary mb-3" @onclick="NavigateToCreate">Create New Presentation</button>
+
+@if (presentations == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!presentations.Any())
+{
+    <p><em>No presentations available.</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Speaker</th>
+                <th>Room</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Questions</th>
+                <th>Ratings</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var presentation in presentations)
+            {
+                <tr>
+                    <td>@presentation.Title</td>
+                    <td>@presentation.Speaker</td>
+                    <td>@presentation.Room</td>
+                    <td>@presentation.StartTime.ToString("g")</td>
+                    <td>@presentation.EndTime.ToString("g")</td>
+                    <td>@presentation.Questions.Count</td>
+                    <td>@presentation.Ratings.Count</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" @onclick="() => ViewDetails(presentation.Id)">Details</button>
+                        <button class="btn btn-sm btn-danger ms-1" @onclick="() => DeletePresentation(presentation.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Presentation>? presentations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPresentations();
+    }
+
+    private async Task LoadPresentations()
+    {
+        presentations = await PresentationService.GetAllPresentationsAsync();
+    }
+
+    private void NavigateToCreate()
+    {
+        NavigationManager.NavigateTo("/presentations/create");
+    }
+
+    private void ViewDetails(int id)
+    {
+        NavigationManager.NavigateTo($"/presentations/{id}");
+    }
+
+    private async Task DeletePresentation(int id)
+    {
+        if (await PresentationService.DeletePresentationAsync(id))
+        {
+            await LoadPresentations();
+        }
+    }
+}

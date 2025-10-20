@@ -1,0 +1,152 @@
+@page "/presentations/{id:int}"
+@using ConfApp.Shared.Models
+@using ConfAPI.Services
+@inject PresentationService PresentationService
+@inject QuestionService QuestionService
+@inject RatingService RatingService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Presentation Details</PageTitle>
+
+@if (presentation == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <h1>@presentation.Title</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Details</h5>
+            <p><strong>Speaker:</strong> @presentation.Speaker</p>
+            <p><strong>Description:</strong> @presentation.Description</p>
+            <p><strong>Room:</strong> @presentation.Room</p>
+            <p><strong>Start Time:</strong> @presentation.StartTime.ToString("g")</p>
+            <p><strong>End Time:</strong> @presentation.EndTime.ToString("g")</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Questions (@questions?.Count ?? 0)</h5>
+                </div>
+                <div class="card-body">
+                    @if (questions != null && questions.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var question in questions)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">@question.AskedBy</h6>
+                                        <small>@question.AskedAt.ToString("g")</small>
+                                    </div>
+                                    <p class="mb-1">@question.Text</p>
+                                    @if (question.IsAnswered)
+                                    {
+                                        <div class="alert alert-success mt-2 mb-0">
+                                            <strong>Answer:</strong> @question.Answer
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-primary mt-2" @onclick="() => ShowAnswerForm(question.Id)">
+                                            Answer
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No questions yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Ratings (@ratings?.Count ?? 0) - Average: @averageRating.ToString("F1")</h5>
+                </div>
+                <div class="card-body">
+                    @if (ratings != null && ratings.Any())
+                    {
+                        <div class="list-group">
+                            @foreach (var rating in ratings)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">@rating.RatedBy</h6>
+                                        <small>@rating.RatedAt.ToString("g")</small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <strong>Score:</strong> 
+                                        @for (int i = 0; i < rating.Score; i++)
+                                        {
+                                            <span>⭐</span>
+                                        }
+                                    </p>
+                                    @if (!string.IsNullOrEmpty(rating.Comment))
+                                    {
+                                        <p class="mb-0"><em>@rating.Comment</em></p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No ratings yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-secondary" @onclick="GoBack">Back to List</button>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Presentation? presentation;
+    private List<Question>? questions;
+    private List<Rating>? ratings;
+    private double averageRating;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        presentation = await PresentationService.GetPresentationByIdAsync(Id);
+        if (presentation != null)
+        {
+            questions = await QuestionService.GetQuestionsByPresentationIdAsync(Id);
+            ratings = await RatingService.GetRatingsByPresentationIdAsync(Id);
+            averageRating = await RatingService.GetAverageRatingAsync(Id);
+        }
+    }
+
+    private void ShowAnswerForm(int questionId)
+    {
+        // In a real app, you'd show a modal or inline form
+        // For simplicity, we'll just navigate
+        NavigationManager.NavigateTo($"/questions/{questionId}/answer");
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/presentations");
+    }
+}

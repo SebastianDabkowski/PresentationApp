@@ -1,0 +1,62 @@
+﻿@page "/"
+@using ConfApp.Shared.Models
+@using ConfMobileApp.Services
+@inject ApiService ApiService
+
+<PageTitle>Conference App - Attendee</PageTitle>
+
+<h1>Conference Presentations</h1>
+
+<p>View presentations, ask questions, and rate sessions</p>
+
+@if (presentations == null)
+{
+    <p><em>Loading presentations...</em></p>
+}
+else if (!presentations.Any())
+{
+    <p><em>No presentations available at this time.</em></p>
+}
+else
+{
+    <div class="row">
+        @foreach (var presentation in presentations)
+        {
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@presentation.Title</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">@presentation.Speaker</h6>
+                        <p class="card-text">@presentation.Description</p>
+                        <p class="card-text">
+                            <small>
+                                📍 @presentation.Room<br />
+                                🕒 @presentation.StartTime.ToString("g") - @presentation.EndTime.ToString("t")
+                            </small>
+                        </p>
+                        <a href="/presentation/@presentation.Id" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<Presentation>? presentations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            presentations = await ApiService.GetPresentationsAsync();
+        }
+        catch (Exception ex)
+        {
+            // In a real app, handle this better
+            Console.WriteLine($"Error loading presentations: {ex.Message}");
+            presentations = new List<Presentation>();
+        }
+    }
+}
+
