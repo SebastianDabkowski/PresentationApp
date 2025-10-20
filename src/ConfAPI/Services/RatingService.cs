@@ -33,7 +33,7 @@ public class RatingService
 
     public async Task<Rating> CreateRatingAsync(Rating rating)
     {
-        rating.RatedAt = DateTime.Now;
+        rating.RatedAt = DateTime.UtcNow;
         _context.Ratings.Add(rating);
         await _context.SaveChangesAsync();
         return rating;
