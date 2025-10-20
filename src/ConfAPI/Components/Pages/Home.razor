@@ -1,0 +1,47 @@
+﻿@page "/"
+
+<PageTitle>Conference App</PageTitle>
+
+<h1>Conference Management System</h1>
+
+<p>Welcome to the Conference App - manage presentations, questions, and ratings</p>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">📊 Presentations</h5>
+                <p class="card-text">Manage conference presentations, speakers, and schedules</p>
+                <a href="/presentations" class="btn btn-primary">View Presentations</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">❓ Questions</h5>
+                <p class="card-text">View and answer attendee questions</p>
+                <a href="/presentations" class="btn btn-primary">Manage Questions</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">⭐ Ratings</h5>
+                <p class="card-text">View attendee ratings and feedback</p>
+                <a href="/presentations" class="btn btn-primary">View Ratings</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h3>About ConfApp</h3>
+    <p>This application is built with Blazor and Entity Framework Core. It consists of:</p>
+    <ul>
+        <li><strong>ConfAPI</strong> - Admin interface for managing events (this app)</li>
+        <li><strong>ConfMobileApp</strong> - Attendee interface for viewing and interacting with presentations</li>
+        <li><strong>API Endpoints</strong> - RESTful API for data access</li>
+    </ul>
+</div>

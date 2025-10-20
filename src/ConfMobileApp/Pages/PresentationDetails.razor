@@ -1,0 +1,229 @@
+@page "/presentation/{id:int}"
+@using ConfApp.Shared.Models
+@using ConfMobileApp.Services
+@inject ApiService ApiService
+
+<PageTitle>Presentation Details</PageTitle>
+
+@if (presentation == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@presentation.Title</li>
+        </ol>
+    </nav>
+
+    <h1>@presentation.Title</h1>
+    <h4 class="text-muted">@presentation.Speaker</h4>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <p>@presentation.Description</p>
+            <p>
+                <strong>📍 Room:</strong> @presentation.Room<br />
+                <strong>🕒 Time:</strong> @presentation.StartTime.ToString("g") - @presentation.EndTime.ToString("t")
+            </p>
+            @if (averageRating > 0)
+            {
+                <p><strong>⭐ Average Rating:</strong> @averageRating.ToString("F1") / 5.0</p>
+            }
+        </div>
+    </div>
+
+    <!-- Ask a Question Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Ask a Question</h5>
+        </div>
+        <div class="card-body">
+            @if (questionSubmitted)
+            {
+                <div class="alert alert-success">Your question has been submitted!</div>
+            }
+            <div class="mb-3">
+                <label class="form-label">Your Name</label>
+                <input type="text" class="form-control" @bind="newQuestion.AskedBy" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Question</label>
+                <textarea class="form-control" rows="3" @bind="newQuestion.Text"></textarea>
+            </div>
+            <button class="btn btn-primary" @onclick="SubmitQuestion" disabled="@isSubmitting">
+                @(isSubmitting ? "Submitting..." : "Submit Question")
+            </button>
+        </div>
+    </div>
+
+    <!-- Rate This Presentation Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Rate This Presentation</h5>
+        </div>
+        <div class="card-body">
+            @if (ratingSubmitted)
+            {
+                <div class="alert alert-success">Thank you for your rating!</div>
+            }
+            <div class="mb-3">
+                <label class="form-label">Your Name</label>
+                <input type="text" class="form-control" @bind="newRating.RatedBy" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Rating (1-5 stars)</label>
+                <div>
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var starValue = i;
+                        <button type="button" class="btn btn-link p-0" @onclick="() => SelectRating(starValue)">
+                            <span style="font-size: 2rem; color: @(starValue <= newRating.Score ? "gold" : "lightgray")">⭐</span>
+                        </button>
+                    }
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Comment (optional)</label>
+                <textarea class="form-control" rows="3" @bind="newRating.Comment"></textarea>
+            </div>
+            <button class="btn btn-primary" @onclick="SubmitRating" disabled="@isSubmittingRating">
+                @(isSubmittingRating ? "Submitting..." : "Submit Rating")
+            </button>
+        </div>
+    </div>
+
+    <!-- Questions Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Questions (@questions?.Count ?? 0)</h5>
+        </div>
+        <div class="card-body">
+            @if (questions != null && questions.Any())
+            {
+                <div class="list-group">
+                    @foreach (var question in questions)
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">@question.AskedBy</h6>
+                                <small>@question.AskedAt.ToString("g")</small>
+                            </div>
+                            <p class="mb-1">@question.Text</p>
+                            @if (question.IsAnswered)
+                            {
+                                <div class="alert alert-info mt-2 mb-0">
+                                    <strong>Answer:</strong> @question.Answer
+                                </div>
+                            }
+                            else
+                            {
+                                <small class="text-muted">Waiting for answer...</small>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>No questions yet. Be the first to ask!</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Presentation? presentation;
+    private List<Question>? questions;
+    private double averageRating;
+    private Question newQuestion = new();
+    private Rating newRating = new();
+    private bool questionSubmitted;
+    private bool ratingSubmitted;
+    private bool isSubmitting;
+    private bool isSubmittingRating;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            presentation = await ApiService.GetPresentationAsync(Id);
+            if (presentation != null)
+            {
+                questions = await ApiService.GetQuestionsAsync(Id);
+                averageRating = await ApiService.GetAverageRatingAsync(Id);
+                newQuestion.PresentationId = Id;
+                newRating.PresentationId = Id;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+
+    private async Task SubmitQuestion()
+    {
+        if (string.IsNullOrWhiteSpace(newQuestion.AskedBy) || string.IsNullOrWhiteSpace(newQuestion.Text))
+        {
+            return;
+        }
+
+        isSubmitting = true;
+        try
+        {
+            await ApiService.CreateQuestionAsync(newQuestion);
+            questionSubmitted = true;
+            newQuestion = new Question { PresentationId = Id };
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting question: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void SelectRating(int score)
+    {
+        newRating.Score = score;
+    }
+
+    private async Task SubmitRating()
+    {
+        if (string.IsNullOrWhiteSpace(newRating.RatedBy) || newRating.Score == 0)
+        {
+            return;
+        }
+
+        isSubmittingRating = true;
+        try
+        {
+            await ApiService.CreateRatingAsync(newRating);
+            ratingSubmitted = true;
+            newRating = new Rating { PresentationId = Id };
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error submitting rating: {ex.Message}");
+        }
+        finally
+        {
+            isSubmittingRating = false;
+        }
+    }
+}

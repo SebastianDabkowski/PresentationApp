@@ -1,0 +1,74 @@
+@page "/presentations/create"
+@using ConfApp.Shared.Models
+@using ConfAPI.Services
+@inject PresentationService PresentationService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Create Presentation</PageTitle>
+
+<h1>Create New Presentation</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <EditForm Model="@presentation" OnValidSubmit="@HandleSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <InputText class="form-control" @bind-Value="presentation.Title" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Speaker</label>
+                <InputText class="form-control" @bind-Value="presentation.Speaker" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <InputTextArea class="form-control" rows="4" @bind-Value="presentation.Description" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Room</label>
+                <InputText class="form-control" @bind-Value="presentation.Room" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Start Time</label>
+                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="presentation.StartTime" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">End Time</label>
+                    <InputDate Type="InputDateType.DateTimeLocal" class="form-control" @bind-Value="presentation.EndTime" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Presentation presentation = new()
+    {
+        StartTime = DateTime.Now,
+        EndTime = DateTime.Now.AddHours(1)
+    };
+
+    private async Task HandleSubmit()
+    {
+        await PresentationService.CreatePresentationAsync(presentation);
+        NavigationManager.NavigateTo("/presentations");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/presentations");
+    }
+}
